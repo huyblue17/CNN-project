@@ -1,4 +1,5 @@
 import os
+import json
 import tensorflow as tf
 from data import load_mnist_data, preprocess_data
 
@@ -22,21 +23,47 @@ def build_cnn_model():
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
     return model
 
-def train_model(model, train_images, train_labels):
+def train_model(model, train_images, train_labels, epochs=10, batch_size=64, validation_split=0.1):
     """
     Huấn luyện mô hình.
     Args:
         model: Keras model
         train_images: numpy array, shape (N, 28, 28, 1)
         train_labels: numpy array, shape (N, 10)
+        epochs: Số lần lặp huấn luyện
+        batch_size: Kích thước batch
+        validation_split: Tỷ lệ dữ liệu validation
     Returns: Training history
     """
-    history = model.fit(train_images, train_labels,
-                       epochs=5,
-                       batch_size=64,
-                       validation_split=0.1,
-                       verbose=1)
+    # Callbacks for better training management
+    callbacks = [
+        tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True),
+        tf.keras.callbacks.ModelCheckpoint('best_model.h5', save_best_only=True, monitor='val_loss')
+    ]
+
+    history = model.fit(
+        train_images, train_labels,
+        epochs=epochs,
+        batch_size=batch_size,
+        validation_split=validation_split,
+        verbose=1,
+        callbacks=callbacks
+    )
     return history
+
+def save_training_history(history, output_dir="outputs"):
+    """
+    Lưu lịch sử huấn luyện vào file JSON.
+    Args:
+        history: Training history object
+        output_dir: Thư mục lưu trữ
+    """
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    history_path = os.path.join(output_dir, "training_history.json")
+    with open(history_path, 'w') as f:
+        json.dump(history.history, f)
+    print(f"Lịch sử huấn luyện đã được lưu vào '{history_path}'")
 
 if __name__ == "__main__":
     print("Đang tải dữ liệu MNIST...")
@@ -50,10 +77,13 @@ if __name__ == "__main__":
     model.summary()
 
     print("Đang huấn luyện mô hình...")
-    history = train_model(model, train_images, train_labels)
+    history = train_model(model, train_images, train_labels, epochs=10, batch_size=64, validation_split=0.1)
 
     # Lưu mô hình trực tiếp vào thư mục hiện tại
     model_path = "mnist_cnn_model.h5"
     print(f"Đang lưu mô hình vào '{model_path}'...")
     model.save(model_path)
     print(f"Mô hình đã được lưu vào '{model_path}'")
+
+    # Lưu lịch sử huấn luyện
+    save_training_history(history)

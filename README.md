@@ -30,3 +30,4 @@ Dự án deeplearning thực hiện CNN (Convolutional Neural Network) để ph�
 - scikit-learn
 - Pillow
 - Tkinter (đối với GUI)
+- UV
