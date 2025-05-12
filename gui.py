@@ -24,15 +24,43 @@ def create_digit_recognition_gui(model):
     window = tk.Tk()
     window.title("Nhận diện chữ số viết tay")
 
+    # --- UI/UX Enhancements ---
+    # Title label
+    title_label = tk.Label(window, text="Nhận diện chữ số viết tay MNIST", font=('Arial', 18, 'bold'), fg='#2c3e50')
+    title_label.pack(pady=(15, 5))
+
+    # Instruction label
+    instruction_label = tk.Label(window, text="Vẽ một chữ số (0-9) vào khung bên dưới, sau đó nhấn 'Dự đoán' để nhận kết quả.", font=('Arial', 11), fg='#34495e')
+    instruction_label.pack(pady=(0, 10))
+
     # Tạo canvas để vẽ
     canvas_width = 280
     canvas_height = 280
-    canvas = tk.Canvas(window, width=canvas_width, height=canvas_height, bg="white")
+    canvas = tk.Canvas(window, width=canvas_width, height=canvas_height, bg="white", highlightthickness=2, highlightbackground="#bdc3c7")
     canvas.pack(pady=10)
 
     # Biến lưu nét vẽ và lịch sử dự đoán
     drawing_strokes = []
     history_log = []
+
+    # --- Button Frame for better layout ---
+    button_frame = tk.Frame(window)
+    button_frame.pack(pady=5)
+    predict_button = ttk.Button(button_frame, text="Dự đoán", command=lambda: recognize_digit())
+    predict_button.grid(row=0, column=0, padx=8)
+    clear_button = ttk.Button(button_frame, text="Xóa", command=lambda: clear_canvas())
+    clear_button.grid(row=0, column=1, padx=8)
+    save_button = ttk.Button(button_frame, text="Lưu lịch sử", command=lambda: save_history())
+    save_button.grid(row=0, column=2, padx=8)
+
+    # Tạo nhãn hiển thị kết quả
+    result_label = tk.Label(window, text="Kết quả: Chưa dự đoán", font=('Arial', 14), fg='#2980b9', justify='left', anchor='w')
+    result_label.pack(pady=10, fill='x', padx=20)
+
+    # --- Status Bar ---
+    status_var = tk.StringVar(value="Sẵn sàng.")
+    status_bar = tk.Label(window, textvariable=status_var, bd=1, relief='sunken', anchor='w', font=('Arial', 10), fg='#7f8c8d')
+    status_bar.pack(side='bottom', fill='x')
 
     def start_drawing(event):
         """
@@ -62,6 +90,7 @@ def create_digit_recognition_gui(model):
         canvas.delete("all")
         drawing_strokes.clear()
         result_label.config(text="Kết quả: Chưa dự đoán")
+        status_var.set("Đã xóa bảng vẽ.")
 
     def recognize_digit():
         """
@@ -69,6 +98,7 @@ def create_digit_recognition_gui(model):
         """
         if not drawing_strokes:
             result_label.config(text="Vui lòng vẽ một chữ số trước!")
+            status_var.set("Chưa có nét vẽ để dự đoán.")
             return
         # Tạo ảnh từ nét vẽ
         image_pil = Image.new("L", (canvas_width, canvas_height), color=255)
@@ -99,7 +129,8 @@ def create_digit_recognition_gui(model):
         # Hiển thị kết quả
         probs = prediction[0]
         prob_text = "\n".join([f"Class {i}: {probs[i]:.4f}" for i in range(10)])
-        result_label.config(text=f"Kết quả: {predicted_label}\nXác suất:\n{prob_text}")
+        result_label.config(text=f"Kết quả: {predicted_label}\n\nXác suất:\n{prob_text}")
+        status_var.set(f"Dự đoán: {predicted_label}")
 
         # Trực quan hóa ảnh vẽ
         plt.figure(figsize=(3, 3))
@@ -119,22 +150,11 @@ def create_digit_recognition_gui(model):
         with open(history_path, 'w') as f:
             f.write(str(history_log))
         print(f"Lịch sử dự đoán đã được lưu vào '{history_path}'")
+        status_var.set("Lịch sử dự đoán đã được lưu.")
 
     # Gán sự kiện cho canvas
     canvas.bind('<Button-1>', start_drawing)
     canvas.bind('<B1-Motion>', draw_line)
-
-    # Tạo các nút
-    predict_button = ttk.Button(window, text="Dự đoán", command=recognize_digit)
-    predict_button.pack(pady=5)
-    clear_button = ttk.Button(window, text="Xóa", command=clear_canvas)
-    clear_button.pack(pady=5)
-    save_button = ttk.Button(window, text="Lưu lịch sử", command=save_history)
-    save_button.pack(pady=5)
-
-    # Tạo nhãn hiển thị kết quả
-    result_label = tk.Label(window, text="Kết quả: Chưa dự đoán", font=('Arial', 14))
-    result_label.pack(pady=10)
 
     # Chạy giao diện
     window.mainloop()
