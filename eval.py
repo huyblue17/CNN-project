@@ -18,14 +18,14 @@ def find_h5_file(root_dir):
     return None
 
 def evaluate_on_test(model, raw_test_images, raw_test_labels, processed_test_images, processed_test_labels):
-    print("\nRating on raw dataset:")
+    print("\nĐánh giá trên tập test THÔ:")
     temp_images, temp_labels = preprocess_data(raw_test_images, raw_test_labels)
     raw_loss, raw_accuracy = model.evaluate(temp_images, temp_labels, verbose=0)
-    print(f"Accuracy on raw dataset: {raw_accuracy:.4f}")
+    print(f"Độ chính xác trên tập test thô: {raw_accuracy:.4f}")
 
-    print("\nRating on processed test dataset:")
+    print("\nĐánh giá trên tập test ĐÃ XỬ LÝ:")
     processed_loss, processed_accuracy = model.evaluate(processed_test_images, processed_test_labels, verbose=0)
-    print(f"Accuracy on processed test dataset: {processed_accuracy:.4f}")
+    print(f"Độ chính xác trên tập test đã xử lý: {processed_accuracy:.4f}")
 
 def visualize_predictions(model, test_images, test_labels):
     num_samples = 50
@@ -41,30 +41,30 @@ def visualize_predictions(model, test_images, test_labels):
     for i in range(num_samples):
         plt.subplot(10, 5, i + 1)
         plt.imshow(sample_images[i].reshape(28, 28), cmap='binary')
-        plt.title(f"Predict: {predicted_classes[i]}\nActual: {true_classes[i]}",
+        plt.title(f"Dự đoán: {predicted_classes[i]}\nThực tế: {true_classes[i]}",
                   color='green' if predicted_classes[i] == true_classes[i] else 'red')
         plt.axis('off')
     plt.tight_layout()
     plt.show()
 
 if __name__ == "__main__":
-    print("Loading data MNIST...")
+    print("Đang tải dữ liệu MNIST...")
     _, _, raw_test_images, raw_test_labels = load_mnist_data()
 
-    print("Process data...")
+    print("Đang tiền xử lý dữ liệu...")
     test_images, test_labels = preprocess_data(raw_test_images, raw_test_labels)
 
-    print("Finding model...")
+    print("Đang tìm mô hình...")
     model_path = find_h5_file(os.getcwd())
     if model_path:
-        print(f"Mode at: {model_path}")
+        print(f"Mô hình được tìm thấy tại: {model_path}")
         model = tf.keras.models.load_model(model_path)
     else:
-        print("Can't find model 'mnist_cnn_model.h5'. Compile train.py first!")
+        print("Không tìm thấy mô hình 'mnist_cnn_model.h5'. Vui lòng chạy train.py trước!")
         exit(1)
 
-    print("Rating model on test dataset...")
+    print("Đánh giá mô hình trên tập test...")
     evaluate_on_test(model, raw_test_images, raw_test_labels, test_images, test_labels)
 
-    print("Result of prediction...")
+    print("Hiển thị kết quả dự đoán trên tập kiểm tra...")
     visualize_predictions(model, test_images, test_labels)
